@@ -1,5 +1,5 @@
 import returnCachedModel from '@/utils/returnCachedModel';
-import mongoose from 'mongoose';
+import mongoose, { InferSchemaType } from 'mongoose';
 
 const sessionSchema = new mongoose.Schema({
     _id: {
@@ -15,5 +15,5 @@ const sessionSchema = new mongoose.Schema({
         required: true
     }
 }, { _id: false })
-
+export type SessionType = InferSchemaType<typeof sessionSchema>;
 export default returnCachedModel('session', sessionSchema);
