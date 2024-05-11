@@ -14,6 +14,7 @@ export const GET = defaultErrorHandler(async (req) => {
 
     // Retrieving the stored state from the cookies
     const storedState = cookies().get('github_oauth_state')?.value ?? null;
+    console.log(`code: ${code} state: ${state} storedState: ${storedState}`);
     if (!code || !state || state !== storedState) {
         throw new ApiError(400, "Invalid code or state. It's also possible that the state doesn't match the stored state.");
     }
