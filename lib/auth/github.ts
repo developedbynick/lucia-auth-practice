@@ -1,7 +1,7 @@
 import GithubUser, { GitHubEmail } from '@/types/auth/GithubUser';
 import ApiError from '@/utils/ApiError';
 import { GitHub } from 'arctic';
-
+import "@/utils/connectToDb";
 export const github = new GitHub(process.env.GITHUB_CLIENT_ID!, process.env.GITHUB_CLIENT_SECRET!);
 export const retrieveGithubUser = async (accessToken: string) => {
     // Retrieving the user from Github
