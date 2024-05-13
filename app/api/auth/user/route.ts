@@ -1,3 +1,4 @@
+import { lucia } from "@/auth";
 import getUser from "@/lib/auth/getUser";
 import defaultErrorHandler from "@/utils/defaultErrorHandler";
 import { NextResponse } from "next/server";

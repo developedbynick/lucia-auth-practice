@@ -1,8 +1,9 @@
-import { github, retrieveGithubUser } from "@/lib/auth/github";
+import { createOrReturnGithubUser, github, retrieveGithubUser } from "@/lib/auth/github";
 import { cookies } from "next/headers";
 import defaultErrorHandler from "@/utils/defaultErrorHandler";
 import { NextResponse } from "next/server";
 import ApiError from "@/utils/ApiError";
+import createLuciaSessionAndCookie from "@/lib/auth/createLuciaSessionAndCookie";
 
 export const dynamic = "force-dynamic"
 
@@ -14,15 +15,20 @@ export const GET = defaultErrorHandler(async (req) => {
 
     // Retrieving the stored state from the cookies
     const storedState = cookies().get('github_oauth_state')?.value ?? null;
-    console.log(`code: ${code} state: ${state} storedState: ${storedState}`);
-    if (!code || !state || state !== storedState) {
-        throw new ApiError(400, "Invalid code or state. It's also possible that the state doesn't match the stored state.");
-    }
+
+    if (!code || !state || state !== storedState)
+        throw new ApiError(400, "Oh No! Something went wrong. Please try again!");
+
     // Exchanging the code for a access token
     const tokens = await github.validateAuthorizationCode(code);
-    const user = await retrieveGithubUser(tokens.accessToken);
+    const userFromGithub = await retrieveGithubUser(tokens.accessToken);
+    const user = await createOrReturnGithubUser(userFromGithub);
 
-    return NextResponse.json({ user });
+    // Authenticate with lucia
+    await createLuciaSessionAndCookie(user);
 
+    // Redirect user.
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    return NextResponse.redirect(`${protocol}://${req.nextUrl.host}/`);
 });
 

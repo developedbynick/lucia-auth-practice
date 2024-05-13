@@ -9,7 +9,7 @@ export default interface User extends UserTimeStamps {
     name: string;
     email: string;
     password: string;
-    // provider?: "Google" | "Twitter(X)" | "Github",
-    //   providerId?: string;
+    provider?: "Google" | "Twitter(X)" | "Github",
+    providerId?: string;
     _id: string;
 }

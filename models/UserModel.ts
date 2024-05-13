@@ -1,11 +1,13 @@
-import mongoose from 'mongoose';
+import mongoose, { HydratedDocument, SchemaDefinitionProperty } from 'mongoose';
 import User, { UserInstanceMethods } from '@/types/models/User';
 import validator from 'validator';
 import returnCachedModel from '@/utils/returnCachedModel';
 import bcrypt from 'bcryptjs';
 
 type userType = Omit<User, 'createdAt' | 'updatedAt'>;
-const userSchema = new mongoose.Schema<userType, any, any, any, Pick<User, 'createdAt' | 'updatedAt'>>({
+type MongooseModelType = mongoose.Model<userType, {}, UserInstanceMethods>;
+
+const userSchema = new mongoose.Schema<userType, MongooseModelType, any, any, Pick<User, 'createdAt' | 'updatedAt'>>({
     _id: String,
     name: {
         type: String,
@@ -23,14 +25,30 @@ const userSchema = new mongoose.Schema<userType, any, any, any, Pick<User, 'crea
     },
     password: {
         type: String,
-        required: [true, 'Please provide a password'],
+        required: [function () {
+            return !Boolean(this.providerId);
+        }, 'Please provide a password'],
         minlength: [8, 'Password must be at least 8 characters long'],
         maxlength: [64, 'Password must not exceed 30 characters'],
         select: false,
     },
+    provider: {
+        type: String,
+        required: [function () {
+            return Boolean(this.providerId);
+        }, "A provider id must have a provider"],
+        enum: {
+            values: ["Google", "Twitter(X)", "Github"],
+            message: "{VALUE} is not an accepted provider"
+        },
+        lowercase: true,
+    },
+    providerId: { type: String, unique: true }
 
 }, { _id: false, timestamps: true });
 
+export type HydratedUser = HydratedDocument<userType>;
+
 userSchema.methods.comparePasswords = async (hashedPassword: string, regPassword: string) => bcrypt.compare(regPassword, hashedPassword);
 
-export default returnCachedModel('users', userSchema) as mongoose.Model<userType, {}, UserInstanceMethods>
+export default returnCachedModel('users', userSchema) as MongooseModelType;

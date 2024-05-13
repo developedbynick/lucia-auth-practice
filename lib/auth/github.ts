@@ -2,6 +2,8 @@ import GithubUser, { GitHubEmail } from '@/types/auth/GithubUser';
 import ApiError from '@/utils/ApiError';
 import { GitHub } from 'arctic';
 import "@/utils/connectToDb";
+import User, { HydratedUser } from '@/models/UserModel';
+import crypto from 'crypto';
 export const github = new GitHub(process.env.GITHUB_CLIENT_ID!, process.env.GITHUB_CLIENT_SECRET!);
 export const retrieveGithubUser = async (accessToken: string) => {
     // Retrieving the user from Github
@@ -23,5 +25,27 @@ export const retrieveGithubUser = async (accessToken: string) => {
         // Otherwise, return a OAuth response from github with the user.
         user.email = primaryAndVerifiedEmail.email;
     }
+    return user;
+}
+
+export const createOrReturnGithubUser = async (githubUser: GithubUser): Promise<HydratedUser> => {
+    // Check if user with the given id exists
+    const potentialUserId = await User.exists({ providerId: `${githubUser.id}` });
+    if (!potentialUserId) return createUserFromGithub(githubUser);
+
+    // Return the user that was found
+    const user = await User.findById(potentialUserId._id);
+    return user!;
+}
+
+const createUserFromGithub = async (githubUser: GithubUser): Promise<HydratedUser | never> => {
+    // Extract user properties
+    const { name, email, id: providerId, avatar_url } = githubUser;
+    // Check to see if the email is present on the object... if not we throw an error
+    if (!email)
+        throw new ApiError(400, "The email address could not be retrieved from github")
+    // create user
+    const user = await User.create({ _id: crypto.randomUUID(), name, email, providerId, provider: 'Github', })
+    // return user
     return user;
 }

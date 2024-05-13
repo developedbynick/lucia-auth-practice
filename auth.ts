@@ -25,7 +25,10 @@ export const lucia = new Lucia(adapter, {
             createdAt: attributes.createdAt,
             updatedAt: attributes.updatedAt,
         }
-
+        if (attributes.provider) {
+            returnObj.provider = attributes.provider;
+            returnObj.providerId = attributes.providerId;
+        }
         return returnObj;
     },
 });

@@ -1,9 +1,9 @@
 import { lucia } from '@/auth'
-import TUser from '../models/User';
+import { UserWithoutPasswordReturnType } from '@/lib/auth/returnUserWithoutPassword';
 
 declare module 'lucia' {
     interface Register {
         Lucia: typeof lucia;
-        DatabaseUserAttributes: TUser;
+        DatabaseUserAttributes: UserWithoutPasswordReturnType
     }
 }

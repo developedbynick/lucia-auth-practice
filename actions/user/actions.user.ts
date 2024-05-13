@@ -1,6 +1,5 @@
 "use server";
 import crypto from 'crypto';
-import TUser from "@/types/models/User";
 import { HydratedDocument } from "mongoose";
 import User from '@/models/UserModel';
 import { lucia } from '@/auth';
@@ -9,7 +8,8 @@ import bcrypt from 'bcryptjs';
 import capitalize from 'capitalize';
 import { revalidatePath } from 'next/cache';
 import ActionError from '@/utils/ActionError';
-
+import createLuciaSessionAndCookie from '@/lib/auth/createLuciaSessionAndCookie';
+import returnUserWithoutPassword, { UserWithoutPasswordReturnType } from '@/lib/auth/returnUserWithoutPassword';
 // Types 
 export interface SignUpProps {
     name: string;
@@ -22,26 +22,10 @@ export interface SignInProps {
     password: string;
 }
 
-type UserAuthReturnType = { success: boolean, message: string; user: HydratedDocument<UserWithoutAllThree> | null }
-type UserWithoutTimestamps = HydratedDocument<Omit<TUser, 'createdAt' | 'updatedAt'>>
-type UserWithoutAllThree = HydratedDocument<Omit<UserWithoutTimestamps, 'password'>>
+type UserAuthReturnType = { success: boolean, message: string; user: UserWithoutPasswordReturnType | null }
 type UserAuthFn<T extends object> = (data: T) => Promise<UserAuthReturnType>;
 
 // Helpers
-async function createLuciaSessionAndCookie(user: UserWithoutTimestamps) {
-    // Create session and cookie
-    const session = await lucia.createSession(user._id, {});
-    // Things to do if the user said we shouldn't remember them 
-
-    // Set cookie
-    const cookie = lucia.createSessionCookie(session.id);
-    cookies().set(cookie.name, cookie.value, cookie.attributes);
-}
-function returnUserWithoutPassword(user: UserWithoutTimestamps): UserWithoutAllThree {
-    const userWithoutPassword = JSON.parse(JSON.stringify(user));
-    userWithoutPassword.password = null;
-    return userWithoutPassword
-}
 
 // Actions
 export const signUpAction: UserAuthFn<SignUpProps> = async ({ name, email, password }) => {

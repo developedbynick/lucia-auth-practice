@@ -13,8 +13,8 @@ export const GET = defaultErrorHandler(async () => {
     });
     cookies().set("github_oauth_state", state, {
         httpOnly: true,
-        sameSite: 'strict',
-        maxAge: 60 * 10
+        maxAge: 30 * 1000,
+        sameSite: 'lax'
     })
     return NextResponse.redirect(url);
 })
